@@ -1,0 +1,22 @@
+{
+  "admin_xacml": {
+    "Request": {
+      "Action": {
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "Value": "$action-id"
+          }
+        ]
+      },
+      "Resource": {
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:resource:resource-id",
+            "Value": "$resource-id"
+          }
+        ]
+      }
+    }
+  }
+}
