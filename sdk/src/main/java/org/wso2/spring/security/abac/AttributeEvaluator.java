@@ -1,4 +1,4 @@
-package com.rnavagamuwa.springsecurity.abac;
+package org.wso2.spring.security.abac;
 
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;

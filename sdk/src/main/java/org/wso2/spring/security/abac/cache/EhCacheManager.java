@@ -1,4 +1,4 @@
-package com.rnavagamuwa.springsecurity.abac.cache;
+package org.wso2.spring.security.abac.cache;
 
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
@@ -12,7 +12,7 @@ import java.time.Duration;
 /**
  * @author Randika Navagamuwa
  */
-public class EhCacheManager implements com.rnavagamuwa.springsecurity.abac.cache.CacheManager {
+public class EhCacheManager implements org.wso2.spring.security.abac.cache.CacheManager {
 
     private static String CACHE_NAME = "policyRequestCache";
     private static long EXPIRY_IN_MINUTUES = 60;

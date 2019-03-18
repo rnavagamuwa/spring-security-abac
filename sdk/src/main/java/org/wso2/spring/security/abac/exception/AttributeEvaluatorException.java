@@ -1,4 +1,4 @@
-package com.rnavagamuwa.springsecurity.abac.exception;
+package org.wso2.spring.security.abac.exception;
 
 /**
  * @author Randika Navagamuwa

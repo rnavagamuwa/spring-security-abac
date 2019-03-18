@@ -1,6 +1,5 @@
-package com.rnavagamuwa.springsecurity.abac;
+package org.wso2.spring.security.abac;
 
-import com.rnavagamuwa.springsecurity.abac.exception.AttributeEvaluatorException;
 import org.apache.commons.io.FileUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -10,6 +9,7 @@ import org.json.JSONObject;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
 
 import java.io.IOException;
 import java.io.StringWriter;

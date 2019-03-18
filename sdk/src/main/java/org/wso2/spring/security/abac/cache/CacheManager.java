@@ -1,4 +1,4 @@
-package com.rnavagamuwa.springsecurity.abac.cache;
+package org.wso2.spring.security.abac.cache;
 
 /**
  * @author Randika Navagamuwa
