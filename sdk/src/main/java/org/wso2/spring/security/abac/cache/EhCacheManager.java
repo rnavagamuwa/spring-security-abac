@@ -19,14 +19,14 @@ public class EhCacheManager implements org.wso2.spring.security.abac.cache.Cache
     private static long MAX_ENTRIES = 100;
 
     private CacheManager cacheManager;
-    private Cache<String, String> responseCache;
+    private Cache<String, String> cache;
 
     public EhCacheManager() {
 
         cacheManager = CacheManagerBuilder.newCacheManagerBuilder().build();
         cacheManager.init();
 
-        responseCache = cacheManager.createCache(CACHE_NAME, CacheConfigurationBuilder
+        cache = cacheManager.createCache(CACHE_NAME, CacheConfigurationBuilder
                 .newCacheConfigurationBuilder(String.class, String.class, ResourcePoolsBuilder.heap(MAX_ENTRIES))
                 .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofMinutes(EXPIRY_IN_MINUTUES)))
                 .build());
@@ -34,11 +34,11 @@ public class EhCacheManager implements org.wso2.spring.security.abac.cache.Cache
 
     public String get(String cahceKey) {
 
-        return this.responseCache.get(cahceKey);
+        return this.cache.get(cahceKey);
     }
 
     public String putIfAbsent(String key, String value) {
 
-        return this.responseCache.putIfAbsent(key, value);
+        return this.cache.putIfAbsent(key, value);
     }
 }
