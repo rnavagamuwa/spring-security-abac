@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Properties;
 import javax.net.ssl.SSLContext;
 
@@ -34,7 +35,8 @@ import javax.net.ssl.SSLContext;
 @SuppressWarnings("WeakerAccess")
 public class XacmlAttributeHandler implements AttributeHandler {
 
-    private static String XACML_PDP_URL;
+    private static String XACML_PDP_AUTHORIZE_URL;
+    private static String XACML_PDP_RESOURCE_LIST_URL;
     private static String TRUST_STORE;
     private static String TRUST_STORE_PASSWORD;
     private static String KEY_STORE;
@@ -42,13 +44,15 @@ public class XacmlAttributeHandler implements AttributeHandler {
 
     private CacheManager responseCacheManager;
     private SSLContext sslContext;
+    private HttpHeaders headers;
 
     public XacmlAttributeHandler() {
 
         try {
             Properties properties = PropertiesLoaderUtils
                     .loadAllProperties("application.properties");
-            XACML_PDP_URL = properties.getProperty("xacml.pdp.url");
+            XACML_PDP_AUTHORIZE_URL = properties.getProperty("xacml.pdp.url.authorize");
+            XACML_PDP_RESOURCE_LIST_URL = properties.getProperty("xacml.pdp.url.resourceList");
             TRUST_STORE = properties.getProperty("xacml.pdp.trustStore");
             TRUST_STORE_PASSWORD = properties.getProperty("xacml.pdp.trustStore.password");
             KEY_STORE = properties.getProperty("xacml.pdp.keyStore");
@@ -59,7 +63,7 @@ public class XacmlAttributeHandler implements AttributeHandler {
             throw new AttributeEvaluatorException("Failed to read the XACML PDP Url", e);
         }
 
-        if (XACML_PDP_URL == null) {
+        if (XACML_PDP_AUTHORIZE_URL == null) {
             //todo stop the whole app
         }
 
@@ -76,6 +80,11 @@ public class XacmlAttributeHandler implements AttributeHandler {
             //todo stop the whole app
             throw new AttributeEvaluatorException("Failed to read keystore or truststore", e);
         }
+
+        this.headers = new HttpHeaders();
+        this.headers.setContentType(MediaType.APPLICATION_JSON);
+        this.headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        this.headers.set("WSO2-Identity-User", "admin");
 
         this.responseCacheManager = new EhCacheManager();
     }
@@ -94,14 +103,10 @@ public class XacmlAttributeHandler implements AttributeHandler {
             RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder().requestFactory(() ->
                     new HttpComponentsClientHttpRequestFactory(client));
             RestTemplate rt = restTemplateBuilder.build();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.set("WSO2-Identity-User", "admin");
 
-            HttpEntity<String> entity = new HttpEntity<>(authRequest, headers);
+            HttpEntity<String> entity = new HttpEntity<>(authRequest, this.headers);
 
-            ResponseEntity response = rt.postForEntity(XACML_PDP_URL, entity, String.class);
+            ResponseEntity response = rt.postForEntity(XACML_PDP_AUTHORIZE_URL, entity, String.class);
             if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
                 return false;
             }
@@ -123,6 +128,35 @@ public class XacmlAttributeHandler implements AttributeHandler {
             }
         }
         return true;
+    }
+
+    @Override
+    public Optional<JSONObject> getApiResourceList() {
+
+        String cachedResponse = this.responseCacheManager.get(XACML_PDP_RESOURCE_LIST_URL);
+
+        if (cachedResponse == null) {
+
+            HttpClient client = HttpClients.custom()
+                    .setSSLContext(sslContext)
+                    .build();
+
+            RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder().requestFactory(() ->
+                    new HttpComponentsClientHttpRequestFactory(client));
+            RestTemplate rt = restTemplateBuilder.build();
+
+            HttpEntity<String> entity = new HttpEntity<>(this.headers);
+
+            ResponseEntity response = rt.getForEntity(XACML_PDP_RESOURCE_LIST_URL, String.class, entity);
+
+            if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+
+                return Optional.empty();
+            }
+            cachedResponse = response.getBody().toString();
+            this.responseCacheManager.putIfAbsent(XACML_PDP_RESOURCE_LIST_URL, cachedResponse);
+        }
+        return Optional.of(new JSONObject(cachedResponse));
     }
 
     private KeyStore loadPfx(String file, char[] password) throws Exception {
