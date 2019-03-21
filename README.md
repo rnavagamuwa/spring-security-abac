@@ -48,8 +48,17 @@ As the initial version, I have managed to write a working sample for this use ca
        }
      }
      ````
-          
-3. Extend `GlobalMethodSecurityConfiguration` class and set `AttributeEvaluator` as the new `PermissionEvaluator`
+      
+3. Define following properties in the `application.properties` file.
+   ```
+   xacml.pdp.url.authorize=https://localhost:9443/api/identity/entitlement/decision/pdp
+   xacml.pdp.url.resourceList=https://localhost:9443/api/identity/entitlement/decision/home
+   xacml.pdp.trustStore=truststore
+   xacml.pdp.trustStore.password=password
+   xacml.pdp.keyStore=keystore
+   xacml.pdp.keyStore.password=password
+   ```          
+4. Extend `GlobalMethodSecurityConfiguration` class and set `AttributeEvaluator` as the new `PermissionEvaluator`
     ```
     @Configuration
     @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -65,7 +74,7 @@ As the initial version, I have managed to write a working sample for this use ca
         }
     }
     ```
-4. Now add the `@PreAuthorize("hasPermission()")` or `@PostAuthorize("hasPermission()")` annotation as required before the correct controller method. *Target Domain Object* and the *Permissions* should be passed to this annotaion as parameters.*Permissions* is a json object which contains the key value pairs. These permission values will be extracted from the *headers*. 
+5. Now add the `@PreAuthorize("hasPermission()")` or `@PostAuthorize("hasPermission()")` annotation as required before the correct controller method. *Target Domain Object* and the *Permissions* should be passed to this annotaion as parameters.*Permissions* is a json object which contains the key value pairs. These permission values will be extracted from the *headers*. 
     
    ```
     @PreAuthorize("hasPermission('admin_xacml','{$action-id:action-id,$resource-id:resource-id}')")
