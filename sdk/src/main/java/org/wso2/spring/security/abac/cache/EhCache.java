@@ -26,6 +26,7 @@ public class EhCache implements Cache {
     @Override
     public Object putIfAbsent(Object key, Object value) {
 
-        return this.cache.putIfAbsent(key, value);
+        this.cache.putIfAbsent(key, value);
+        return value;
     }
 }
