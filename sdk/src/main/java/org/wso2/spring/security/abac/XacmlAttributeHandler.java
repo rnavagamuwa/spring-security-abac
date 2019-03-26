@@ -10,6 +10,9 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
@@ -26,7 +29,6 @@ import org.springframework.ws.transport.http.HttpComponentsMessageSender;
 import org.wso2.spring.security.abac.cache.Cache;
 import org.wso2.spring.security.abac.cache.CacheManager;
 import org.wso2.spring.security.abac.cache.EhCacheManager;
-import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
 import org.wso2.spring.security.abac.soaputils.CustomSSLHttpClientFactory;
 import org.wso2.spring.security.abac.soaputils.EntitlementServiceClient;
 import org.wso2.spring.security.abac.soaputils.wsdl.EntitledResultSetDTO;
@@ -50,6 +52,8 @@ import javax.xml.bind.JAXBElement;
  */
 @SuppressWarnings("WeakerAccess")
 public class XacmlAttributeHandler implements AttributeHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(XacmlAttributeHandler.class);
 
     private static String XACML_PDP_AUTHORIZE_URL;
     private static String XACML_PDP_RESOURCE_LIST_URL;
@@ -86,12 +90,26 @@ public class XacmlAttributeHandler implements AttributeHandler {
 
         } catch (IOException e) {
 
-            //todo stop the whole app
-            throw new AttributeEvaluatorException("Failed to read the XACML PDP Url", e);
+            logger.error("Failed to read properties from application.properties", e);
+            stopApplication();
         }
 
         if (XACML_PDP_AUTHORIZE_URL == null) {
-            //todo stop the whole app
+
+            logger.error("xacml.pdp.url.authorize property is null null in application.properties");
+            stopApplication();
+        }
+
+        if (XACML_PDP_RESOURCE_LIST_URL == null) {
+
+            logger.error("xacml.pdp.url.resource.list property is null in application.properties");
+            stopApplication();
+        }
+
+        if (XACML_PDP_ENTITLEMENT_SERVICE_URL == null) {
+
+            logger.error("xacml.pdp.url.entitlement.service property is null in application.properties");
+            stopApplication();
         }
 
         try {
@@ -136,8 +154,8 @@ public class XacmlAttributeHandler implements AttributeHandler {
                             .build()));
         } catch (Exception e) {
 
-            //todo stop the whole app
-            throw new AttributeEvaluatorException("Failed to read keystore or truststore", e);
+            logger.error("Failed to read trustStore/keyStore", e);
+            SpringApplication.run(XacmlAttributeHandler.class).close();
         }
 
         this.restHeaders = new HttpHeaders();
@@ -145,6 +163,7 @@ public class XacmlAttributeHandler implements AttributeHandler {
         this.restHeaders.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         this.restHeaders.set("WSO2-Identity-User", "admin");
 
+        logger.info("XacmlAttributeHandler successfully initiated");
     }
 
     @Override
@@ -252,6 +271,11 @@ public class XacmlAttributeHandler implements AttributeHandler {
             keyStore.load(in, password);
         }
         return keyStore;
+    }
+
+    private static void stopApplication() {
+
+        SpringApplication.run(XacmlAttributeHandler.class).close();
     }
 
 }
