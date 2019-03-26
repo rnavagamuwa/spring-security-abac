@@ -23,6 +23,7 @@ import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.ws.transport.http.HttpComponentsMessageSender;
+import org.wso2.spring.security.abac.cache.Cache;
 import org.wso2.spring.security.abac.cache.CacheManager;
 import org.wso2.spring.security.abac.cache.EhCacheManager;
 import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,12 +60,15 @@ public class XacmlAttributeHandler implements AttributeHandler {
     private static String KEY_STORE_PASSWORD;
     private static String CERT_ALIAS;
 
-    private CacheManager responseCacheManager;
     private SSLContext sslContext;
     private HttpHeaders restHeaders;
     private List<Header> soapHeaders;
     private CustomSSLHttpClientFactory customSSLHttpClientFactory;
     private EntitlementServiceClient entitlementServiceClient;
+
+    private Cache<String, String> authCache;
+    private Cache<String, JAXBElement<EntitledResultSetDTO>> entitlementServiceCache;
+    private Cache<String, JSONObject> apiResourceListCache;
 
     public XacmlAttributeHandler() {
 
@@ -111,7 +116,10 @@ public class XacmlAttributeHandler implements AttributeHandler {
             //todo use mutual SSL
             soapHeaders.add(new BasicHeader("Authorization", "Basic YWRtaW46YWRtaW4="));
 
-            this.responseCacheManager = new EhCacheManager();
+            CacheManager cacheManager = EhCacheManager.getInstance();
+            this.authCache = cacheManager.getCache("authCache", String.class, String.class, 60, 100);
+            this.entitlementServiceCache = cacheManager.getCache("entitlementCache", String.class, JAXBElement.class, 60, 100);
+            this.apiResourceListCache = cacheManager.getCache("apiResourceList", String.class, JSONObject.class, 60, 100);
 
             Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
             marshaller.setContextPath("org.wso2.spring.security.abac.soaputils.wsdl");
@@ -142,7 +150,7 @@ public class XacmlAttributeHandler implements AttributeHandler {
     @Override
     public boolean authorize(String authRequest) {
 
-        String cachedResponse = this.responseCacheManager.get(authRequest);
+        String cachedResponse = this.authCache.get(authRequest);
 
         if (cachedResponse == null) {
 
@@ -161,7 +169,7 @@ public class XacmlAttributeHandler implements AttributeHandler {
                 return false;
             }
             cachedResponse = response.getBody().toString();
-            this.responseCacheManager.putIfAbsent(authRequest, cachedResponse);
+            this.authCache.putIfAbsent(authRequest, cachedResponse);
         }
 
         JSONObject responseObj = new JSONObject(cachedResponse);
@@ -183,30 +191,33 @@ public class XacmlAttributeHandler implements AttributeHandler {
     @Override
     public Optional<JSONObject> getApiResourceList() {
 
-        String cachedResponse = this.responseCacheManager.get(XACML_PDP_RESOURCE_LIST_URL);
+        JSONObject cachedObject = this.apiResourceListCache.get(XACML_PDP_RESOURCE_LIST_URL);
 
-        if (cachedResponse == null) {
+        if (cachedObject != null) {
 
-            HttpClient client = HttpClients.custom()
-                    .setSSLContext(sslContext)
-                    .build();
-
-            RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder().requestFactory(() ->
-                    new HttpComponentsClientHttpRequestFactory(client));
-            RestTemplate rt = restTemplateBuilder.build();
-
-            HttpEntity<String> entity = new HttpEntity<>(this.restHeaders);
-
-            ResponseEntity response = rt.getForEntity(XACML_PDP_RESOURCE_LIST_URL, String.class, entity);
-
-            if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-
-                return Optional.empty();
-            }
-            cachedResponse = response.getBody().toString();
-            this.responseCacheManager.putIfAbsent(XACML_PDP_RESOURCE_LIST_URL, cachedResponse);
+            return Optional.of(cachedObject);
         }
-        return Optional.of(new JSONObject(cachedResponse));
+
+        HttpClient client = HttpClients.custom()
+                .setSSLContext(sslContext)
+                .build();
+
+        RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder().requestFactory(() ->
+                new HttpComponentsClientHttpRequestFactory(client));
+        RestTemplate rt = restTemplateBuilder.build();
+
+        HttpEntity<String> entity = new HttpEntity<>(this.restHeaders);
+
+        ResponseEntity response = rt.getForEntity(XACML_PDP_RESOURCE_LIST_URL, String.class, entity);
+
+        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+
+            return Optional.empty();
+        }
+
+        return Optional.of(this.apiResourceListCache.putIfAbsent(XACML_PDP_RESOURCE_LIST_URL,
+                new JSONObject(response.getBody().toString())));
+
     }
 
     @Override
@@ -214,8 +225,22 @@ public class XacmlAttributeHandler implements AttributeHandler {
                                                                    String subjectId, String action,
                                                                    boolean enableChildSearch) {
 
-        return this.entitlementServiceClient.
-                getEntitledAttributes(subjectName, resourceName, subjectId, action, enableChildSearch).getReturn();
+        String key = Base64
+                .getEncoder()
+                .encodeToString(subjectName
+                        .concat(resourceName)
+                        .concat(subjectId)
+                        .concat(action)
+                        .concat(String.valueOf(enableChildSearch)).getBytes());
+
+        JAXBElement<EntitledResultSetDTO> resultSet = this.entitlementServiceCache.get(key);
+
+        if (resultSet != null) {
+            return resultSet;
+        }
+
+        return this.entitlementServiceCache.putIfAbsent(key, this.entitlementServiceClient.
+                getEntitledAttributes(subjectName, resourceName, subjectId, action, enableChildSearch).getReturn());
 
     }
 

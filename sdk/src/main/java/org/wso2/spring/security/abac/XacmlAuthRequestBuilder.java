@@ -9,11 +9,14 @@ import org.json.JSONObject;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.wso2.spring.security.abac.cache.Cache;
+import org.wso2.spring.security.abac.cache.EhCacheManager;
 import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Iterator;
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,8 +27,24 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
 
     private static String ATTRIBUTE_CONFIG_FILE_NAME = "xacmlConfig.json";
 
+    private Cache<String, String> requestBuilderCache;
+
+    public XacmlAuthRequestBuilder() {
+
+        this.requestBuilderCache = EhCacheManager.getInstance().getCache("requestBuilderCache",
+                String.class, String.class, 60, 100);
+    }
+
     @Override
     public String createAuthRequest(String policyName, String jsonKeyValuePairs) {
+
+        String key = Base64.getEncoder().encodeToString(policyName.concat(jsonKeyValuePairs).trim().getBytes());
+
+        String cachedRequest = this.requestBuilderCache.get(key);
+
+        if (cachedRequest != null) {
+            return cachedRequest;
+        }
 
         VelocityContext vc = generateVelocityData(jsonKeyValuePairs);
 
@@ -57,7 +76,7 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
                     policyName);
         }
 
-        return xacmlRequest;
+        return this.requestBuilderCache.putIfAbsent(key, xacmlRequest);
     }
 
     private VelocityContext generateVelocityData(String jsonKeyValuePairs) {

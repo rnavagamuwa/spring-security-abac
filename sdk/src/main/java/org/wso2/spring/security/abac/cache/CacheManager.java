@@ -5,7 +5,5 @@ package org.wso2.spring.security.abac.cache;
  */
 public interface CacheManager {
 
-    String get(String cahceKey);
-
-    String putIfAbsent(String key, String value);
+    Cache getCache(String cacheName, Class<?> key, Class<?> value, long expiryInMuntues, long maxEntries);
 }
