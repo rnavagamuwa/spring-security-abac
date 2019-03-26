@@ -81,4 +81,4 @@ As the initial version, I have managed to write a working sample for this use ca
     ```
 
 #### Note
-In addition to XACML Based Authorization this SDK exposes methods to get `API Resource List` and `Entitled Attributes`.
+In addition to XACML Based Authorization, this SDK exposes methods to get `API Resource List` and `Entitled Attributes`.
