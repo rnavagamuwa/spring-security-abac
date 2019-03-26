@@ -80,3 +80,5 @@ As the initial version, I have managed to write a working sample for this use ca
     @PreAuthorize("hasPermission('admin_xacml','{$action-id:action-id,$resource-id:resource-id}')")
     ```
 
+#### Note
+In addition to XACML Based Authorization this SDK exposes methods to get `API Resource List` and `Entitled Attributes`.
