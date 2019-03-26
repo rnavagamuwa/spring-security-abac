@@ -30,10 +30,8 @@ public class EntitlementServiceClient extends WebServiceGatewaySupport {
         request.setAction(factory.createGetEntitledAttributesAction(action));
         request.setEnableChildSearch(enableChildSearch);
 
-        GetEntitledAttributesResponse response = (GetEntitledAttributesResponse) getWebServiceTemplate()
+        return (GetEntitledAttributesResponse) getWebServiceTemplate()
                 .marshalSendAndReceive(this.entitlementServiceUrl, request);
-
-        return response;
 
     }
 }
