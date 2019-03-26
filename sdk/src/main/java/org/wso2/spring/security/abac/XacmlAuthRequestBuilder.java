@@ -1,6 +1,5 @@
 package org.wso2.spring.security.abac;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -15,7 +14,6 @@ import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Iterator;
 import javax.servlet.http.HttpServletRequest;
@@ -50,8 +48,6 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
 
         String xacmlRequest;
         try {
-            xacmlRequest = FileUtils.readFileToString(ResourceUtils.getFile("classpath:" + ATTRIBUTE_CONFIG_FILE_NAME),
-                    StandardCharsets.UTF_8);
 
             VelocityEngine velocityEngine = new VelocityEngine();
             velocityEngine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH,
