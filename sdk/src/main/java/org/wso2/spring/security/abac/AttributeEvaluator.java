@@ -2,6 +2,8 @@ package org.wso2.spring.security.abac;
 
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
+import org.wso2.spring.security.abac.util.AuthRequestBuilder;
+import org.wso2.spring.security.abac.util.XacmlAuthRequestBuilder;
 
 import java.io.Serializable;
 

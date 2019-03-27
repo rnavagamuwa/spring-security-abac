@@ -1,4 +1,4 @@
-package org.wso2.spring.security.abac;
+package org.wso2.spring.security.abac.util;
 
 /**
  * @author Randika Navagamuwa

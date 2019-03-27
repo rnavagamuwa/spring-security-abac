@@ -1,4 +1,4 @@
-package org.wso2.spring.security.abac;
+package org.wso2.spring.security.abac.util;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
