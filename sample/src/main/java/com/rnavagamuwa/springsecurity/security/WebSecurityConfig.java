@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -62,11 +63,19 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import java.io.IOException;
 import java.util.*;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements InitializingBean, DisposableBean {
+
+    private static String KEY_STORE;
+    private static String KEY_STORE_PASSWORD;
+    private static String CERT_ALIAS;
+    private static String CERT_PASSWORD;
+    private static String IDP_META_DATA_URL;
+    private static String ISSUER_ID;
 
     private Timer backgroundTaskTimer;
     private MultiThreadedHttpConnectionManager multiThreadedHttpConnectionManager;
@@ -81,6 +90,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
         this.backgroundTaskTimer.purge();
         this.backgroundTaskTimer.cancel();
         this.multiThreadedHttpConnectionManager.shutdown();
+    }
+
+    public WebSecurityConfig() {
+
+        try {
+            Properties properties = PropertiesLoaderUtils
+                    .loadAllProperties("application.properties");
+            KEY_STORE = properties.getProperty("xacml.pdp.keyStore");
+            KEY_STORE_PASSWORD = properties.getProperty("xacml.pdp.keyStore.password");
+            CERT_ALIAS = properties.getProperty("xacml.pdp.cert.alias");
+            CERT_PASSWORD = properties.getProperty("xacml.pdp.cert.password");
+            IDP_META_DATA_URL = properties.getProperty("xacml.idp.metadata.url");
+            ISSUER_ID = properties.getProperty("idp.issuerid");
+
+        } catch (IOException e) {
+
+            throw new RuntimeException(e);
+        }
     }
 
     @Autowired
@@ -177,11 +204,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     public KeyManager keyManager() {
         DefaultResourceLoader loader = new DefaultResourceLoader();
         Resource storeFile = loader
-                .getResource("classpath:/keystore");
-        String storePass = "password";
+                .getResource("classpath:/" + KEY_STORE);
+        String storePass = KEY_STORE_PASSWORD;
         Map<String, String> passwords = new HashMap<String, String>();
-        passwords.put("randika-client", "password");
-        String defaultKey = "randika-client";
+        passwords.put(CERT_ALIAS, CERT_PASSWORD);
+        String defaultKey = CERT_ALIAS;
         return new JKSKeyManager(storeFile, storePass, passwords, defaultKey);
     }
 
@@ -229,9 +256,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     @Qualifier("idp-ssocircle")
     public ExtendedMetadataDelegate ssoCircleExtendedMetadataProvider()
             throws MetadataProviderException {
-        String idpSSOCircleMetadataURL = "https://localhost:9443/identity/metadata/saml2";
         HTTPMetadataProvider httpMetadataProvider = new HTTPMetadataProvider(
-                this.backgroundTaskTimer, httpClient(), idpSSOCircleMetadataURL);
+                this.backgroundTaskTimer, httpClient(), IDP_META_DATA_URL);
         httpMetadataProvider.setParserPool(parserPool());
         ExtendedMetadataDelegate extendedMetadataDelegate =
                 new ExtendedMetadataDelegate(httpMetadataProvider, extendedMetadata());
@@ -256,7 +282,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     @Bean
     public MetadataGenerator metadataGenerator() {
         MetadataGenerator metadataGenerator = new MetadataGenerator();
-        metadataGenerator.setEntityId("com:rnavagamuwa:springsecurity");
+        metadataGenerator.setEntityId(ISSUER_ID);
         metadataGenerator.setExtendedMetadata(extendedMetadata());
         metadataGenerator.setIncludeDiscoveryExtension(false);
         metadataGenerator.setKeyManager(keyManager());
