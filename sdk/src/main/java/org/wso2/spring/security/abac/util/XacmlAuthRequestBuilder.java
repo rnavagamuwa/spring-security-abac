@@ -14,6 +14,7 @@ import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -95,7 +96,31 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
         while (keys.hasNext()) {
             String key = keys.next();
             String value = jsonObject.get(key).toString();
-            templateData.put(key, httpServletRequest.getHeader(value));
+            String[] proTypeArr = value.split("\\.", 2);
+
+            PropertyType propertyType = PropertyType.getEnum(proTypeArr[0]);
+            if (!proTypeArr[0].isEmpty()) {
+                value = proTypeArr[1];
+            }
+
+            switch (propertyType) {
+                case HEADER:
+                    value = httpServletRequest.getHeader(value);
+                    break;
+                case COOKIE:
+                    value = GeneralUtils.extractValuesFromCookies(httpServletRequest.getCookies()).get(value);
+                    break;
+                case QUERY_PARAM:
+                    value = httpServletRequest.getParameter(value);
+                    break;
+                case FORM_DATA:
+                    value = httpServletRequest.getParameter(value);
+                    break;
+                case PATH_PARAM:
+                    value = GeneralUtils.splitContextPath(httpServletRequest.getContextPath())[Integer.parseInt(value)];
+                    break;
+            }
+            templateData.put(key, value);
         }
 
         return templateData;
@@ -103,13 +128,38 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
 
     private String getTemplateDataAsAString(Map<String, Object> templateData) {
 
-        StringBuilder hash = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         for (Map.Entry<String, Object> entry : templateData.entrySet()) {
-            hash.append(entry.getKey()).append(entry.getValue());
+            stringBuilder.append(entry.getKey()).append(entry.getValue());
         }
 
-        return hash.toString();
+        return stringBuilder.toString();
 
+    }
+
+    private enum PropertyType {
+        HEADER("header"),
+        QUERY_PARAM("queryParam"),
+        COOKIE("cookie"),
+        FORM_DATA("formdata"),
+        PATH_PARAM("pathParam");
+
+        private String property;
+
+        PropertyType(String property) {
+            this.property = property;
+        }
+
+        @Override
+        public String toString() {
+            return this.property;
+        }
+
+        public static PropertyType getEnum(String property) {
+            for (PropertyType v : values())
+                if (v.toString().equalsIgnoreCase(property)) return v;
+            return PropertyType.HEADER;
+        }
     }
 
 }
