@@ -37,7 +37,11 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
     @Override
     public String createAuthRequest(String policyName, String jsonKeyValuePairs) {
 
-        String key = Base64.getEncoder().encodeToString(policyName.concat(jsonKeyValuePairs).trim().getBytes());
+        Map<String, Object> templateData = generateFreemakeTemplateData(jsonKeyValuePairs);
+
+        String key = Base64.getEncoder().encodeToString(policyName
+                .concat(jsonKeyValuePairs)
+                .concat(getTemplateDataAsAString(templateData)).trim().getBytes());
 
         String cachedRequest = this.requestBuilderCache.get(key);
 
@@ -54,8 +58,6 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
             cfg.setDefaultEncoding("UTF-8");
 
             Template template = cfg.getTemplate(ATTRIBUTE_CONFIG_FILE_NAME);
-
-            Map<String, Object> templateData = generateFreemakeTemplateData(jsonKeyValuePairs);
 
             template.process(templateData, out);
             xacmlRequest = new JSONObject(out.toString()).get(policyName).toString();
@@ -97,6 +99,17 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
         }
 
         return templateData;
+    }
+
+    private String getTemplateDataAsAString(Map<String, Object> templateData) {
+
+        StringBuilder hash = new StringBuilder();
+        for (Map.Entry<String, Object> entry : templateData.entrySet()) {
+            hash.append(entry.getKey()).append(entry.getValue());
+        }
+
+        return hash.toString();
+
     }
 
 }

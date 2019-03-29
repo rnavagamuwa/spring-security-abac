@@ -1,0 +1,61 @@
+<!doctype html>
+<html
+        lang="en"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+        layout:decorate="~{layout}"
+>
+
+<body>
+<p></p>
+
+<!-- Content starts -->
+<section class="my-3 p-3 bg-white rounded box-shadow" layout:fragment="content">
+    <div class="alert alert-success" role="alert">
+        <small><strong>Hello </strong> <span class="badge badge-dark big" th:text="${username}">null</span></small>
+    </div>
+
+    <small class="d-block text-right mt-3" id="sso-btn">
+
+
+        <button type="submit" id="submitRequestButton" class="btn btn-spring btn-sm">
+            <i class="fas fa-info-circle"></i> Submit Request
+        </button>
+
+        <a th:href="@{/saml/logout}" class="btn btn-spring btn-sm">
+            <i class="far fa-user-circle"></i> Global logout
+        </a>
+
+        <a th:href="@{/saml/logout?local=true}" class="btn btn-spring btn-sm">
+            <i class="fas fa-sign-out-alt"></i> Local logout
+        </a>
+
+
+    </small>
+
+    <div class="container" style="min-height: 500px">
+
+        <div class="starter-template">
+            <p>Authorization headers</p>
+
+            <div id="feedback"></div>
+
+            Key : <input type="text" name="headerKey" id="headerKey">
+            Value : <input type="text" name="headerValue" id="headerValue">
+
+            <button id="addHeaderButton" class="btn btn-spring btn-sm">
+                <i class="fas fa-plus-circle"></i>
+            </button>
+
+            <ul id="headersList">
+            </ul>
+        </div>
+
+    </div>
+</section>
+<!-- Content ends -->
+
+</body>
+
+</html>

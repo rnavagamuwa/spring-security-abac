@@ -24,8 +24,12 @@ public class AttributeEvaluator implements PermissionEvaluator {
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
 
-        return this.attributeHandler.authorize(this.authRequestBuilder.
-                createAuthRequest(targetDomainObject.toString(), permission.toString()));
+        try {
+            return this.attributeHandler.authorize(this.authRequestBuilder.
+                    createAuthRequest(targetDomainObject.toString(), permission.toString()));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
