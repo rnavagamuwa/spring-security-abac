@@ -1,22 +1,23 @@
 package org.wso2.spring.security.abac.util;
 
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.RuntimeConstants;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.Version;
 import org.json.JSONObject;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.wso2.spring.security.abac.cache.Cache;
 import org.wso2.spring.security.abac.cache.EhCacheManager;
 import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Iterator;
-import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * @author Randika Navagamuwa
@@ -44,26 +45,29 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
             return cachedRequest;
         }
 
-        VelocityContext vc = generateVelocityData(jsonKeyValuePairs);
-
         String xacmlRequest;
-        try {
+        try (StringWriter out = new StringWriter()) {
 
-            VelocityEngine velocityEngine = new VelocityEngine();
-            velocityEngine.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH,
-                    ResourceUtils.getFile("classpath:" + ATTRIBUTE_CONFIG_FILE_NAME).getParent());
-            Template template = velocityEngine.getTemplate(ATTRIBUTE_CONFIG_FILE_NAME);
-            velocityEngine.init();
+            Configuration cfg = new Configuration(new Version("2.3.23"));
 
-            StringWriter writer = new StringWriter();
-            template.merge(vc, writer);
+            cfg.setClassForTemplateLoading(this.getClass(), "/");
+            cfg.setDefaultEncoding("UTF-8");
 
-            xacmlRequest = new JSONObject(writer.toString()).get(policyName).toString();
+            Template template = cfg.getTemplate(ATTRIBUTE_CONFIG_FILE_NAME);
 
-        } catch (IOException e) {
+            Map<String, Object> templateData = generateFreemakeTemplateData(jsonKeyValuePairs);
+
+            template.process(templateData, out);
+            xacmlRequest = new JSONObject(out.toString()).get(policyName).toString();
+
+            out.flush();
+
+
+        } catch (IOException | TemplateException e) {
 
             throw new AttributeEvaluatorException("Failed to build the XACML Json request for policy with name : " +
                     policyName, e);
+
         }
 
         if (xacmlRequest == null || xacmlRequest.isEmpty()) {
@@ -75,8 +79,7 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
         return this.requestBuilderCache.putIfAbsent(key, xacmlRequest);
     }
 
-    private VelocityContext generateVelocityData(String jsonKeyValuePairs) {
-
+    private Map<String, Object> generateFreemakeTemplateData(String jsonKeyValuePairs) {
         JSONObject jsonObject = new JSONObject(jsonKeyValuePairs.trim());
 
         Iterator<String> keys = jsonObject.keys();
@@ -85,15 +88,15 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
                 RequestContextHolder.currentRequestAttributes();
         HttpServletRequest httpServletRequest = servletRequestAttributes.getRequest();
 
-        VelocityContext velocityContext = new VelocityContext();
+        Map<String, Object> templateData = new HashMap<>();
 
         while (keys.hasNext()) {
             String key = keys.next();
             String value = jsonObject.get(key).toString();
-            velocityContext.put(key, httpServletRequest.getHeader(value));
+            templateData.put(key, httpServletRequest.getHeader(value));
         }
 
-        return velocityContext;
+        return templateData;
     }
 
 }

@@ -44,12 +44,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
-            <version>${org.apache.velocity.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
         </dependency>
@@ -64,10 +58,14 @@
             <artifactId>spring-ws-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
+
     </dependencies>
     <properties>
         <commons-io.version>2.6</commons-io.version>
         <org.json.version>20180813</org.json.version>
-        <org.apache.velocity.version>1.7</org.apache.velocity.version>
     </properties>
 </project>

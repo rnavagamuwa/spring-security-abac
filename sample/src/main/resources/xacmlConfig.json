@@ -5,7 +5,7 @@
         "Attribute": [
           {
             "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
-            "Value": "$action-id"
+            "Value": "${actionid}"
           }
         ]
       },
@@ -13,7 +13,7 @@
         "Attribute": [
           {
             "AttributeId": "urn:oasis:names:tc:xacml:1.0:resource:resource-id",
-            "Value": "$resource-id"
+            "Value": "${resourceid}"
           }
         ]
       }
