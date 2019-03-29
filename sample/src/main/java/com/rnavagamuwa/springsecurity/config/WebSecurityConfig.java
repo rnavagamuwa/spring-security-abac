@@ -1,20 +1,4 @@
-/*
- * Copyright 2019 Vincenzo De Notaris
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.rnavagamuwa.springsecurity.security;
+package com.rnavagamuwa.springsecurity.config;
 
 import com.rnavagamuwa.springsecurity.SAMLUserDetailsServiceImpl;
 import org.apache.commons.httpclient.HttpClient;
@@ -66,6 +50,9 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * @author Randika Navagamuwa
+ */
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements InitializingBean, DisposableBean {
@@ -426,7 +413,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     }
 
     /**
-     * Define the security filter chain in order to support SSO Auth by using SAML 2.0
+     * Define the config filter chain in order to support SSO Auth by using SAML 2.0
      *
      * @return Filter chain proxy
      * @throws Exception
@@ -465,9 +452,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements I
     }
 
     /**
-     * Defines the web based security configuration.
+     * Defines the web based config configuration.
      *
-     * @param http It allows configuring web based security for specific http requests.
+     * @param http It allows configuring web based config for specific http requests.
      * @throws Exception
      */
     @Override

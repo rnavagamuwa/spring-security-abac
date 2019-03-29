@@ -1,4 +1,4 @@
-package com.rnavagamuwa.springsecurity.security;
+package com.rnavagamuwa.springsecurity.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
