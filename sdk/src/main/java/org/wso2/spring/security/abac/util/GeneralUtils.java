@@ -17,8 +17,4 @@ class GeneralUtils {
         }
         return cookieValues;
     }
-
-    static String[] splitContextPath(String contextPath){
-        return contextPath.split("/");
-    }
 }

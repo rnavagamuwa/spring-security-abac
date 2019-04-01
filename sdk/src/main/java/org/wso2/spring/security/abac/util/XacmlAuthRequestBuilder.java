@@ -7,6 +7,7 @@ import freemarker.template.Version;
 import org.json.JSONObject;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.HandlerMapping;
 import org.wso2.spring.security.abac.cache.Cache;
 import org.wso2.spring.security.abac.cache.EhCacheManager;
 import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
@@ -14,7 +15,6 @@ import org.wso2.spring.security.abac.exception.AttributeEvaluatorException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -117,13 +117,18 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
                     value = httpServletRequest.getParameter(value);
                     break;
                 case PATH_PARAM:
-                    value = GeneralUtils.splitContextPath(httpServletRequest.getContextPath())[Integer.parseInt(value)];
+                    value = extractPathParam(httpServletRequest,value);
                     break;
             }
             templateData.put(key, value);
         }
 
         return templateData;
+    }
+
+    private String extractPathParam(HttpServletRequest httpServletRequest, String key) {
+        Map paramsMap = (Map) httpServletRequest.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        return (String) paramsMap.get(key);
     }
 
     private String getTemplateDataAsAString(Map<String, Object> templateData) {
