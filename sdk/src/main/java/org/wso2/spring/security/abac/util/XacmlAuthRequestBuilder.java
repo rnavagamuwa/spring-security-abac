@@ -146,7 +146,7 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
         HEADER("header"),
         QUERY_PARAM("queryParam"),
         COOKIE("cookie"),
-        FORM_DATA("formdata"),
+        FORM_DATA("formData"),
         PATH_PARAM("pathParam");
 
         private String property;
