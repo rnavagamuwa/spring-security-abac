@@ -38,7 +38,7 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
     @Override
     public String createAuthRequest(String policyName, String jsonKeyValuePairs) {
 
-        Map<String, Object> templateData = generateFreemakeTemplateData(jsonKeyValuePairs);
+        Map<String, Object> templateData = generateFreemakerTemplateData(jsonKeyValuePairs);
 
         String key = Base64.getEncoder().encodeToString(policyName
                 .concat(jsonKeyValuePairs)
@@ -82,7 +82,7 @@ public class XacmlAuthRequestBuilder implements AuthRequestBuilder {
         return this.requestBuilderCache.putIfAbsent(key, xacmlRequest);
     }
 
-    private Map<String, Object> generateFreemakeTemplateData(String jsonKeyValuePairs) {
+    private Map<String, Object> generateFreemakerTemplateData(String jsonKeyValuePairs) {
         JSONObject jsonObject = new JSONObject(jsonKeyValuePairs.trim());
 
         Iterator<String> keys = jsonObject.keys();

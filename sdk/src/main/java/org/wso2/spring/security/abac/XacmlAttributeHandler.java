@@ -121,8 +121,12 @@ public class XacmlAttributeHandler implements AttributeHandler {
             if (response.getStatusCode() != HttpStatus.OK) {
                 return false;
             }
+
             cachedResponse = response.getBody().toString();
-            this.authCache.putIfAbsent(authRequest, cachedResponse);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                this.authCache.putIfAbsent(authRequest, cachedResponse);
+            }
+
         }
 
         JSONObject responseObj = new JSONObject(cachedResponse);
