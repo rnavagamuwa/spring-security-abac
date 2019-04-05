@@ -13,7 +13,7 @@ As the initial version, I have managed to write a working sample for this use ca
 #### The high-level sequence diagram
 
 
-![](https://i.imgur.com/l2Z5ueZ.png)
+![](https://i.imgur.com/SxcnSeE.png)
 
 
 #### Usage
